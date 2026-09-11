@@ -43,6 +43,17 @@
       background: #efefef;
       font-weight: 700;
     }
+    .player-label {
+      border: 1px solid transparent;
+      cursor: pointer;
+      min-height: 40px;
+    }
+    .player-label.locked {
+      border-color: #166534;
+      background: #dcfce7;
+      color: #14532d;
+      box-shadow: inset 0 0 0 1px #166534;
+    }
     .status { font-size: 13px; color: #555; }
     main { padding: 12px; }
     .hero-grid {
@@ -79,17 +90,19 @@
       display: grid;
       place-items: center;
       background: linear-gradient(145deg, #ddd, #bbb);
+      background-size: cover;
+      background-position: 72% center;
       color: #333;
       font-size: 11px;
       text-align: center;
       padding: 8px;
     }
+    .art.has-image { color: transparent; text-shadow: none; }
     .info { padding: 7px; display: grid; gap: 4px; }
     .name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .meta { display: flex; justify-content: space-between; gap: 4px; align-items: center; }
     .score { font-weight: 800; font-size: 16px; }
     .role { font-size: 10px; font-weight: 800; letter-spacing: .04em; color: #555; }
-    .owner { font-size: 10px; color: #666; }
     .section-title { margin: 4px 0 10px; font-size: 14px; color: #555; }
     .drawer {
       margin-top: 12px;
@@ -114,7 +127,7 @@
       <div class="row space">
         <div class="player-control">
           <button class="btn" id="prevPlayer">−</button>
-          <span class="pill" id="playerLabel">P1</span>
+          <button class="pill player-label" id="playerLabel" title="Alle Spieler erfasst umschalten">P1</button>
           <button class="btn" id="nextPlayer">+</button>
           <button class="btn" id="meButton">ME</button>
         </div>
@@ -130,7 +143,6 @@
     </header>
 
     <main>
-      <div class="section-title">Tippen = Pick protokollieren · Karte bleibt verfügbar · × = endgültig aus Pool entfernen</div>
       <section class="hero-grid" id="heroGrid"></section>
       <section class="drawer">
         <h3>Rosters</h3>
@@ -147,6 +159,50 @@
       'Storm','Tactician','Thor','Treant','Vampire Lord','Wolverine','Vanguard Alpha','Vanguard Beta','Vanguard Gamma'
     ];
 
+
+    // Official Dice Throne digital-background URLs. Heroes without a suitable
+    // official portrait URL keep the placeholder until a better source is added.
+    const HERO_IMAGES = {
+      'Artificer': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Artificer-Background1-0ad107.jpg?v=1611564822',
+      'Barbarian': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Barbarian-Background-f9b7b7.jpg?v=1615855477',
+      'Cursed Pirate': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/files/Pirate_Background.jpg?v=1614386023',
+      'Gunslinger': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Gunslinger-Background-f989ae.jpg?v=1615855511',
+      'Huntress': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Huntress-Background-4e2423.jpg?v=1615855538',
+      'Krampus': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/files/Krampus_Desktop_image.jpg?v=1666287397',
+      'Monk': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Monk-Background-9f7a37.jpg?v=1615855650',
+      'Moon Elf': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Moon-Elf-Background-fc963f.jpg?v=1615855687',
+      'Ninja': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/files/Ninja_Background.jpg?v=1666287397',
+      'Paladin': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Paladin-Background-06ebd2.jpg?v=1615855716',
+      'Pyromancer': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Pyromancer-Background-1dd285.jpg?v=1615855782',
+      'Samurai': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Samurai-Background-0c886c.jpg?v=1615855895',
+      'Santa': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/files/Santa_Desktop_image.jpg?v=1666287397',
+      'Seraph': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Seraph-Background-211eeb.jpg?v=1615855934',
+      'Shadow Thief': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Shadow-Thief-Background-868073.jpg?v=1615855964',
+      'Tactician': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Tactician-Background-7cbf69.jpg?v=1615856020',
+      'Treant': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/files/Treant_Background.jpg?v=1666287397',
+      'Vampire Lord': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/a482caf97db3--Vampire-Background-102a11.jpg?v=1615856052'
+      'Black Panther': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/28c38cf37d83--black-panther-c9ddc3.jpg?v=1633727799',
+      'Black Widow': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/28c38cf37d83--DTM-Black-Widow-CS-70516f.png?v=1634656102',
+      'Captain Marvel': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/28c38cf37d83--DTM-Captain-Marvel-CS-70fb62.png?v=1634656116',
+      'Doctor Strange': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/28c38cf37d83--DTM-Doctor-Strange-CS-fbde17.png?v=1634655996',
+      'Loki': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/28c38cf37d83--loki-4d099f.jpg?v=1635180156',
+      'Scarlet Witch': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/28c38cf37d83--DTM-Scarlet-Witch-CS-9d4cda.png?v=1634656073',
+      'Spider-Man': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/28c38cf37d83--DTM-MM-Spider-Man-CS-93a3df.png?v=1634656130',
+      'Thor': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/28c38cf37d83--DTM-Thor-CS-bc0053.png?v=1634656086',
+      'Wolverine': 'https://theop.games/cdn/shop/files/700304158581_3.jpg?v=1739205985',
+      'Storm': 'https://theop.games/cdn/shop/files/700304158581_4.jpg?v=1739205985',
+      'Iceman': 'https://theop.games/cdn/shop/files/700304158581_5.jpg?v=1739205985',
+      'Psylocke': 'https://theop.games/cdn/shop/files/700304158581_6.jpg?v=1739205985',
+      'Jean Grey': 'https://theop.games/cdn/shop/files/DiceThroneXMen_Box2_JeanGreySetup.jpg?v=1739206059',
+      'Cyclops': 'https://theop.games/cdn/shop/files/DiceThroneXMen_Box2_CyclopsSetup.jpg?v=1739206059',
+      'Rogue': 'https://theop.games/cdn/shop/files/DiceThroneXMen_Box2_RogueSetup.jpg?v=1739206059',
+      'Gambit': 'https://theop.games/cdn/shop/files/DiceThroneXMen_Box2_GambitSetup.jpg?v=1739206059',
+      'Raveness': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/b635c33ac33f---render-top-down-4x3-2019.07.03-2-copy-7.png?v=1782428255',
+      'Headless Horseman': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/5343c49b020f---render-top-down-4x3-2019.07.03-2-copy-6.png?v=1782428107',
+      'Pale Lady': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/98c53d393b73---render-top-down-4x3-2019.07.03-2-copy-5.png?v=1782427529',
+      'Necromancer': 'https://cdn.shopify.com/s/files/1/0045/4013/7562/t/9/assets/f15d5f54dccd---render-top-down-4x3-2019.07.03-2-copy-4.png?v=1782427311',
+    };
+
     const BASE = Object.fromEntries(HEROES.map((h, i) => [h, 50 + ((i * 17) % 19) - 9]));
     ['Iceman','Ninja','Pyromancer','Gambit','Thor','Cursed Pirate','Black Widow'].forEach((h, i) => BASE[h] = 62 - i * 1.2);
 
@@ -154,6 +210,7 @@
       currentPlayer: 1,
       playerCount: 8,
       me: null,
+      allPlayersKnown: false,
       sort: 'score',
       heroes: HEROES.map((name, idx) => ({ id: idx + 1, name, removed: false })),
       picks: [],
@@ -256,6 +313,10 @@
       const grid = document.getElementById('heroGrid');
       const available = state.heroes.filter(h => !h.removed);
       available.sort((a,b) => {
+        // Eigene Picks stehen immer ganz vorne – unabhängig von der gewählten Sortierung.
+        const aMine = !!(state.me && state.picks.some(p => p.player === state.me && p.heroName === a.name));
+        const bMine = !!(state.me && state.picks.some(p => p.player === state.me && p.heroName === b.name));
+        if (aMine !== bMine) return aMine ? -1 : 1;
         if (state.sort === 'name') return a.name.localeCompare(b.name,'de');
         const sa = scores[a.id] ?? 0;
         const sb = scores[b.id] ?? 0;
@@ -272,31 +333,37 @@
         const score = scores[h.id] ?? '—';
         const role = roleFor(h.name);
         const rank = state.sort === 'score' ? '#' + (state.heroes.filter(x => !x.removed).sort((x,y)=>(scores[y.id]??0)-(scores[x.id]??0)).findIndex(x=>x.id===h.id)+1) : '';
-        const owners = state.picks.filter(p => p.heroName === h.name).map(p => 'P'+p.player+(p.player===state.me?'·ME':''));
+        const imageUrl = HERO_IMAGES[h.name];
         card.innerHTML = `
           <button class="remove" title="Aus Pool entfernen">×</button>
-          <div class="art">PLATZHALTER<br>${h.name}</div>
+          <div class="art${imageUrl ? ' has-image' : ''}" ${imageUrl ? `style="background-image:url('${imageUrl}')"` : ''}>${imageUrl ? '' : `PLATZHALTER<br>${h.name}`}</div>
           <div class="info">
             <div class="name">${h.name}</div>
             <div class="meta"><span class="score">${score}</span><span class="role">${rank} ${role}</span></div>
-            <div class="owner">${owners.length ? 'gepickt: ' + owners.join(', ') : 'noch kein Pick erfasst'}</div>
           </div>`;
         card.addEventListener('click', (e) => {
           if (e.target.classList.contains('remove')) return;
-          state.history.push(JSON.stringify({currentPlayer:state.currentPlayer,playerCount:state.playerCount,me:state.me,sort:state.sort,heroes:state.heroes,picks:state.picks}));
+          state.history.push(JSON.stringify({currentPlayer:state.currentPlayer,playerCount:state.playerCount,me:state.me,allPlayersKnown:state.allPlayersKnown,sort:state.sort,heroes:state.heroes,picks:state.picks}));
           state.picks.push({ player: state.currentPlayer, heroName: h.name });
           render();
         });
         card.querySelector('.remove').addEventListener('click', (e) => {
           e.stopPropagation();
-          state.history.push(JSON.stringify({currentPlayer:state.currentPlayer,playerCount:state.playerCount,me:state.me,sort:state.sort,heroes:state.heroes,picks:state.picks}));
+          state.history.push(JSON.stringify({currentPlayer:state.currentPlayer,playerCount:state.playerCount,me:state.me,allPlayersKnown:state.allPlayersKnown,sort:state.sort,heroes:state.heroes,picks:state.picks}));
           h.removed = true;
           render();
         });
         grid.appendChild(card);
       });
 
-      document.getElementById('playerLabel').textContent = `P${state.currentPlayer}${state.currentPlayer===state.me?' · ME':''}`;
+      const playerLabel = document.getElementById('playerLabel');
+      playerLabel.textContent = state.allPlayersKnown
+        ? `P${state.currentPlayer}/${state.playerCount}${state.currentPlayer===state.me?' · ME':''}`
+        : `P${state.currentPlayer}${state.currentPlayer===state.me?' · ME':''}`;
+      playerLabel.classList.toggle('locked', state.allPlayersKnown);
+      playerLabel.title = state.allPlayersKnown ? 'Alle Spieler erfasst – antippen zum Entsperren' : 'Antippen, sobald alle Spieler erfasst sind';
+      document.getElementById('prevPlayer').textContent = state.allPlayersKnown ? '←' : '−';
+      document.getElementById('nextPlayer').textContent = state.allPlayersKnown ? '→' : '+';
       document.getElementById('meButton').classList.toggle('active', state.currentPlayer===state.me);
       const known = knownOpponentHeroes().length;
       document.getElementById('statusText').textContent = `Gegner-Picks bekannt: ${known} · Feldgewicht ${Math.round(fieldWeight()*100)}%`;
@@ -314,8 +381,28 @@
       }
     }
 
-    document.getElementById('prevPlayer').onclick = () => { state.currentPlayer = Math.max(1, state.currentPlayer-1); render(); };
-    document.getElementById('nextPlayer').onclick = () => { state.currentPlayer = Math.min(state.playerCount, state.currentPlayer+1); render(); };
+    document.getElementById('prevPlayer').onclick = () => {
+      if (state.allPlayersKnown) {
+        state.currentPlayer = state.currentPlayer === 1 ? state.playerCount : state.currentPlayer - 1;
+      } else {
+        state.currentPlayer = Math.max(1, state.currentPlayer - 1);
+      }
+      render();
+    };
+    document.getElementById('nextPlayer').onclick = () => {
+      if (state.allPlayersKnown) {
+        state.currentPlayer = state.currentPlayer === state.playerCount ? 1 : state.currentPlayer + 1;
+      } else {
+        if (state.currentPlayer >= state.playerCount) state.playerCount += 1;
+        state.currentPlayer += 1;
+      }
+      render();
+    };
+    document.getElementById('playerLabel').onclick = () => {
+      state.allPlayersKnown = !state.allPlayersKnown;
+      if (state.currentPlayer > state.playerCount) state.currentPlayer = state.playerCount;
+      render();
+    };
     document.getElementById('meButton').onclick = () => {
       if (state.me === null) state.me = state.currentPlayer;
       else state.currentPlayer = state.me;
@@ -327,6 +414,7 @@
       state.currentPlayer = snapshot.currentPlayer;
       state.playerCount = snapshot.playerCount;
       state.me = snapshot.me;
+      state.allPlayersKnown = snapshot.allPlayersKnown || false;
       state.sort = snapshot.sort;
       state.heroes = snapshot.heroes;
       state.picks = snapshot.picks || [];
