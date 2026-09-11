@@ -69,3 +69,10 @@ The app is fully static. `index.html` and this README can be placed in a GitHub 
 - Marvel: Dice Throne Store, Marvel Dice Throne Battle Chest.
 - X-Men: The Op Games, Marvel X-Men Dice Throne Box 1 und Box 2.
 - Outcasts: Dice Throne Store, jeweilige Hero Packs.
+
+
+## v0.6.1
+
+- Kritischen JavaScript-Syntaxfehler in der Bildquellen-Liste behoben, durch den das gesamte Heldenraster nicht gerendert wurde.
+- Ursache war ein fehlendes Komma zwischen `Vampire Lord` und `Black Panther`.
+- Keine Änderung an Draft- oder Score-Logik.
